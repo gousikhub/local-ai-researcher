@@ -192,6 +192,7 @@ def get_dashboard():
                 
                 setLoading('uploadBtn', true);
                 try {
+                    // CHANGED: Using relative path '/upload'
                     let res = await fetch('/upload', { method: 'POST', body: formData });
                     let data = await res.json();
                     showToast(data.message);
@@ -216,14 +217,20 @@ def get_dashboard():
                 let btn = document.getElementById('textBtn');
                 btn.innerText = "Injecting..."; btn.disabled = true;
                 
-                let res = await fetch('/manual', { method: 'POST', body: formData });
-                let data = await res.json();
-                
-                btn.innerText = "Inject Knowledge"; btn.disabled = false;
-                showToast(data.message);
-                appendMessage('ai', "[System] " + data.message);
-                document.getElementById('manualLabel').value = "";
-                document.getElementById('manualText').value = "";
+                try {
+                    // CHANGED: Using relative path '/manual'
+                    let res = await fetch('/manual', { method: 'POST', body: formData });
+                    let data = await res.json();
+                    
+                    btn.innerText = "Inject Knowledge"; btn.disabled = false;
+                    showToast(data.message);
+                    appendMessage('ai', "[System] " + data.message);
+                    document.getElementById('manualLabel').value = "";
+                    document.getElementById('manualText').value = "";
+                } catch(e) {
+                    btn.innerText = "Inject Knowledge"; btn.disabled = false;
+                    showToast("Error injecting text.", true);
+                }
             }
 
             async function askQuestion() {
@@ -239,6 +246,7 @@ def get_dashboard():
                 formData.append("question", q);
 
                 try {
+                    // CHANGED: Using relative path '/ask'
                     let res = await fetch('/ask', { method: 'POST', body: formData });
                     let data = await res.json();
                     appendMessage('ai', data.answer);
@@ -250,9 +258,14 @@ def get_dashboard():
 
             async function clearSystem() {
                 if(!confirm("Purge all data from RAM?")) return;
-                await fetch('/clear', {method: 'POST'});
-                document.getElementById('chatHistory').innerHTML = '<div class="message msg-ai">Memory purged. Awaiting new data...</div>';
-                showToast("System Memory Cleared");
+                try {
+                    // CHANGED: Using relative path '/clear'
+                    await fetch('/clear', {method: 'POST'});
+                    document.getElementById('chatHistory').innerHTML = '<div class="message msg-ai">Memory purged. Awaiting new data...</div>';
+                    showToast("System Memory Cleared");
+                } catch(e) {
+                    showToast("Error clearing memory.", true);
+                }
             }
         </script>
     </body>
@@ -264,7 +277,6 @@ def clear_memory():
     ai_engine.clear_database()
     return {"message": "Memory wiped."}
 
-# UPDATED TO ACCEPT A LIST OF FILES
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     success_count = 0
